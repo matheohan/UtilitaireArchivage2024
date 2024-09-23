@@ -22,5 +22,19 @@ mv docker-compose-template.yaml ../docker-compose.yaml
 mkdir ../nginx
 cd ../nginx
 
+# Make Directory for nginx
 mkdir html
 mkdir certs
+
+# Create certificates
+cd certs
+
+# non-interactive and 10 years expiration
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
+
+# Move index.html and nginx.conf
+cd .. 
+mv ../UtilitaireArchivage2024/index.html html/index.html
+
+# Move nginx.conf
+mv ../UtilitaireArchivage2024/nginx.conf nginx.conf
