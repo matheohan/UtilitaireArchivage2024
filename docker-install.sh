@@ -14,3 +14,13 @@ apt-get update
 
 # Install Docker
 apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Move docker-compose 
+mv docker-compose-template.yaml ../docker-compose.yaml
+
+# Make Directory for nginx
+mkdir ../nginx
+cd ../nginx
+
+mkdir html
+mkdir certs
