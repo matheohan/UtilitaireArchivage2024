@@ -1,11 +1,11 @@
 # functions.py
 
 import os
-import requests
+import requests # marche avec Python 3.8.3 ('base': conda)
 import zipfile
-import tarfile
+import tarfile 
 import hashlib
-import paramiko
+import paramiko # marche avec Python 3.8.3 ('base': conda)
 import logging
 import time
 
