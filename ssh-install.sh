@@ -9,7 +9,7 @@ apt install openssh-server -y
 sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
 
 # Restart the ssh service
-sysmtectl restart ssh
+systemctl restart ssh
 
 # Enable ssh service
 systemctl enable ssh
