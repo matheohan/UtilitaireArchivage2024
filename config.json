@@ -14,20 +14,22 @@
     "retention_days": 7,
     "server": {
         "type": "sftp",
-        "hostname": "hostname",
+        "hostname": "",
         "port": 22,
-        "username": "username",
-        "password" : "password",
+        "username": "",
+        "password" : "",
         "destination_path": "/home/files/"
     },
     
     
     "email": {
         "smtp_server" : "smtp.gmail.com",
-        "port" : 587,
-        "sender" : "tsescriptingsystem@gmail.com",
-        "password" : "password",
-        "receiver" : "tsescriptingsystem@gmail.com"
+        "smtp_port" : 587,
+        "smtp_username" : "",
+        "smtp_password" : "",
+
+        "from_email" : "",
+        "to_email" : ""
     }
 
 }

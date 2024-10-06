@@ -55,4 +55,6 @@ try:
     clean_old_archives(config['retention_days'], config['server'], )
 
 except Exception as e:
+    # 8. Gestion des erreurs et envoie de l'email
     logging.error(f"Erreur lors de l'exécution : {e}")
+    send_email(config)

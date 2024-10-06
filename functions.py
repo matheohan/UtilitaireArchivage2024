@@ -10,6 +10,8 @@ import tarfile
 import paramiko
 import time
 from datetime import datetime
+import smtplib
+import base64
 
 def load_config(config_path='config.json'):
     """
@@ -170,3 +172,55 @@ def clean_old_archives(retention_days, server_config):
     except Exception as e:
         logging.error(f"Erreur lors de l'épuration des anciennes archives : {e}")
         raise e
+    
+def send_email(server_config):
+    """
+    Send an email with an attachment using only smtplib and base64 encoding.
+    
+    :param server_config: A dictionary containing email server and message details
+    """
+    general_config = server_config
+
+    server_config = server_config['email']
+    smtp_server = server_config['smtp_server']
+    smtp_port = server_config['smtp_port']
+    smtp_username = server_config['smtp_username']
+    smtp_password = server_config['smtp_password']
+    
+    from_email = server_config['from_email']
+    to_email = server_config['to_email']
+    
+    # Read and encode the file
+    with open(f"./{general_config['logs_directory_name']}/{general_config['log_file_name']}", 'rb') as file:
+        file_content = file.read()
+        encoded_content = base64.b64encode(file_content).decode('utf-8')
+
+    file_name = general_config['log_file_name']
+
+    # Construct the email
+    email_message = f"""From: {from_email}
+To: {to_email}
+Subject: {"An error occurred during execution"}
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary_string"
+
+--boundary_string
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please find below the attached log file.
+
+--boundary_string
+Content-Type: application/octet-stream; name="{file_name}"
+Content-Disposition: attachment; filename="{file_name}"
+Content-Transfer-Encoding: base64
+
+{encoded_content}
+--boundary_string--
+"""
+
+    # Send the email
+    with smtplib.SMTP(smtp_server, smtp_port) as smtp:
+        smtp.starttls()
+        smtp.login(smtp_username, smtp_password)
+        smtp.sendmail(from_email, to_email, email_message)
