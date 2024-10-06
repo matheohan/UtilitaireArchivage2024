@@ -38,3 +38,6 @@ mv ../UtilitaireArchivage2024/index.html html/index.html
 
 # Move nginx.conf
 mv ../UtilitaireArchivage2024/nginx.conf nginx.conf
+
+# Move test100.sql.zip
+mv ../UtilitaireArchivage2024/test100.sql.zip html/test100.sql.zip
