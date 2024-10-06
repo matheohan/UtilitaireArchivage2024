@@ -1,7 +1,6 @@
-
 {
 
-    "remote_host_server_url": "https://localhost",
+    "remote_host_server_url": "",
     "remote_file_name": "test100.sql.zip",
 
     "logs_directory_name" : "logs",
@@ -12,19 +11,17 @@
 
     "hash_file_name": "last_hash.txt",
 
+    "retention_days": 7,
     "server": {
         "type": "sftp",
-        "host": "localhost",
+        "hostname": "hostname",
         "port": 22,
         "username": "username",
         "password" : "password",
-        "destination_path": ""
+        "destination_path": "/home/files"
     },
-
-    "retention_days": 7,
     
     
-
     "email": {
         "smtp_server" : "smtp.gmail.com",
         "port" : 587,
@@ -32,5 +29,6 @@
         "password" : "password",
         "receiver" : "tsescriptingsystem@gmail.com"
         }
+
 }
     

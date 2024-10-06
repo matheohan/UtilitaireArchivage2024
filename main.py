@@ -45,14 +45,14 @@ try:
         archive_name = current_date = f"{datetime.now().strftime('%Y%m%d')}.tgz"
         create_tgz_archive(extracted_file_path, archive_name)
 
-    #     # 6. Transfert de l'archive vers le serveur distant
-    #     if config['server']['type'] == 'sftp':
-    #         upload_to_sftp(archive_name, config['server'])
-
-    #     # 7. Gestion de la durée de rétention
-    #     clean_old_archives(config['server'], config['retention_days'])
+        # 6. Transfert de l'archive vers le serveur distant
+        if config['server']['type'] == 'sftp':
+            upload_to_sftp(archive_name, config['server'])
     else:
         logging.info("Le fichier est identique à celui de la veille. Fin du script.")
+
+    # 7. Gestion de la durée de rétention
+    clean_old_archives(config['server'], config['retention_days'])
 
 except Exception as e:
     logging.error(f"Erreur lors de l'exécution : {e}")
