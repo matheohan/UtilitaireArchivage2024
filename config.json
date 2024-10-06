@@ -18,7 +18,7 @@
         "port": 22,
         "username": "username",
         "password" : "password",
-        "destination_path": "/home/files"
+        "destination_path": "/home/files/"
     },
     
     
@@ -28,7 +28,7 @@
         "sender" : "tsescriptingsystem@gmail.com",
         "password" : "password",
         "receiver" : "tsescriptingsystem@gmail.com"
-        }
+    }
 
 }
     
