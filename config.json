@@ -1,11 +1,17 @@
 
 {
 
-    "remoteHostServerUrl": "",
-    "remoteFileName": "",
-    "local_zip_path": "",
-    "extracted_sql_name": "",
-    "archive_name_format": "*******.tgz",
+    "remote_host_server_url": "https://localhost",
+    "remote_file_name": "test100.sql.zip",
+
+    "logs_directory_name" : "logs",
+    "log_file_name": "archiving.log",
+
+    "files_directory_name" : "files",
+    "extracted_file_name": "../test100.sql",
+
+    "hash_file_name": "last_hash.txt",
+
     "server": {
         "type": "sftp",
         "host": "localhost",
@@ -14,9 +20,10 @@
         "password" : "password",
         "destination_path": ""
     },
+
     "retention_days": 7,
-    "hash_file_path": "./last_hash.txt",
-    "log_file": "./logs/archiving.log",
+    
+    
 
     "email": {
         "smtp_server" : "smtp.gmail.com",
@@ -24,11 +31,6 @@
         "sender" : "tsescriptingsystem@gmail.com",
         "password" : "password",
         "receiver" : "tsescriptingsystem@gmail.com"
-                
-        
-                
-        
         }
-
 }
     

@@ -1,45 +1,58 @@
+# -*- coding: utf-8 -*-
+
 import os
 import logging
 from datetime import datetime
-from functions import load_config, download_zip_file, extract_zip, calculate_file_hash, is_new_file, save_hash
-from functions import create_tgz_archive, upload_to_sftp, clean_old_archives
+from functions import *
 
-# Charger la configuration
-config = load_config()
 
-# Configuration du logging
-logging.basicConfig(filename=config['log_file'], level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Etapes principales
 try:
+    # 0. Initialisation
+    # Chargement de la configuration
+    config = load_config()
+
+    # Vérification de l'existence du dossier logs
+    if not os.path.exists(f"./{config['logs_directory_name']}"):
+        os.makedirs(f"./{config['logs_directory_name']}")
+
+    # Configuration du logging
+    logging.basicConfig(filename=f"./{config['logs_directory_name']}/{config['log_file_name']}", level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', encoding='utf-8')
+
     # 1. Téléchargement du fichier .zip
-    download_zip_file(config['download_url'], config['local_zip_path'])
+    # Vérification de l'existence du dossier files
+    if not os.path.exists(f"./{config['files_directory_name']}"):
+        os.makedirs(f"./{config['files_directory_name']}")
+
+    download_zip_file(config['remote_host_server_url'] + "/" + config['remote_file_name'], "./files/" + config['remote_file_name'])
+    
 
     # 2. Décompression et vérification du contenu
-    extract_zip(config['local_zip_path'], config['extracted_sql_name'])
+    extract_zip(f"./{config['files_directory_name']}/{config['remote_file_name']}", config['extracted_file_name'])
 
     # 3. Calcul du hash du fichier SQL extrait
-    extracted_sql_path = os.path.join(os.path.dirname(config['local_zip_path']), config['extracted_sql_name'])
-    current_hash = calculate_file_hash(extracted_sql_path)
+    extracted_file_path = f"./{config['files_directory_name']}/{config['extracted_file_name'].split('/')[-1]}"
+    current_hash = calculate_file_hash(extracted_file_path)
 
     # 4. Vérifier si le fichier est nouveau
-    if is_new_file(current_hash, config['hash_file_path']):
+    hash_file_path = f"./{config['files_directory_name']}/{config['hash_file_name']}"
+    if is_new_file(current_hash, hash_file_path):
         logging.info("Nouveau fichier détecté, lancement de l'archivage.")
 
         # Sauvegarder le hash du fichier actuel pour la prochaine comparaison
-        save_hash(current_hash, config['hash_file_path'])
+        save_hash(current_hash, hash_file_path)
 
         # 5. Création de l'archive
-        archive_name = datetime.now().strftime(config['archive_name_format'])
-        create_tgz_archive(config['extracted_sql_name'], archive_name)
+        archive_name = current_date = f"{datetime.now().strftime('%Y%m%d')}.tgz"
+        create_tgz_archive(extracted_file_path, archive_name)
 
-        # 6. Transfert de l'archive vers le serveur distant
-        if config['server']['type'] == 'sftp':
-            upload_to_sftp(archive_name, config['server'])
+    #     # 6. Transfert de l'archive vers le serveur distant
+    #     if config['server']['type'] == 'sftp':
+    #         upload_to_sftp(archive_name, config['server'])
 
-        # 7. Gestion de la durée de rétention
-        clean_old_archives(config['server'], config['retention_days'])
+    #     # 7. Gestion de la durée de rétention
+    #     clean_old_archives(config['server'], config['retention_days'])
     else:
         logging.info("Le fichier est identique à celui de la veille. Fin du script.")
+
 except Exception as e:
     logging.error(f"Erreur lors de l'exécution : {e}")
