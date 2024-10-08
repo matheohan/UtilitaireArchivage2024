@@ -124,9 +124,14 @@ def connect_to_sftp(server_config):
     """
     transport = paramiko.Transport((server_config['hostname'], server_config['port']))
 
+    # Vérification si private_key_path est fourni et non vide
+    private_key_path = server_config.get('private_key_path')
+    if not private_key_path:
+        # Utilisation du chemin par défaut si private_key_path est vide ou non fourni
+        private_key_path = os.path.expanduser('~/.ssh/id_rsa')
+
     # Tentative de connexion avec la clé SSH
     try:
-        private_key_path = server_config.get('private_key_path', os.path.expanduser('~/.ssh/id_rsa'))
         private_key = paramiko.RSAKey.from_private_key_file(private_key_path)
         transport.connect(username=server_config['username'], pkey=private_key)
     except Exception as ssh_error:
