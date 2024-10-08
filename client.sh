@@ -3,7 +3,10 @@
 ###--- Dependencies and Cron Setup ---###
 
 # Install paramiko
-apt install python3-paramiko
+apt install python3-paramiko -y
+
+# Install jq and sshpass
+apt install jq sshpass -y 
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
@@ -59,6 +62,13 @@ read_config() {
     port=$(jq -r '.server.port' "$json_file")
 }
 
+update_config_file() {
+    local json_file="$1"
+    local temp_file="${json_file}.tmp"
+    
+    jq '.server.password = ""' "$json_file" > "$temp_file" && mv "$temp_file" "$json_file"
+}
+
 # Function to create SSH key
 create_ssh_key() {
     ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
@@ -68,9 +78,9 @@ create_ssh_key() {
 add_public_key_to_server() {
     local remote_server="$1"
     if [ -n "$password" ]; then
-        sshpass -p "$password" ssh-copy-id -i ~/.ssh/id_rsa.pub -p "$port" "$username@$remote_server"
+        sshpass -p "$password" ssh-copy-id -o StrictHostKeyChecking=no -p "$port" "$username@$remote_server"
         # Immediately unset the password after use
-        unset password
+        update_config_file "$config_file"
     else
         echo "Error: Password is not set in the configuration file."
         exit 1
