@@ -1,5 +1,7 @@
 ﻿#!/bin/bash
 
+###--- Dependencies and Cron Setup ---###
+
 # Install paramiko
 apt install python3-paramiko
 
@@ -45,3 +47,51 @@ systemctl restart cron
 
 # Enable the cron service to start on boot
 systemctl enable cron
+
+###--- SSH KEY Setup ---###
+# Function to read JSON file and extract configuration
+read_config() {
+    local json_file="$1"
+    remote_host=$(jq -r '.remote_host_server_url' "$json_file")
+    username=$(jq -r '.server.username' "$json_file")
+    password=$(jq -r '.server.password' "$json_file")
+    hostname=$(jq -r '.server.hostname' "$json_file")
+    port=$(jq -r '.server.port' "$json_file")
+}
+
+# Function to create SSH key
+create_ssh_key() {
+    ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+}
+
+# Function to add public key to remote server
+add_public_key_to_server() {
+    local remote_server="$1"
+    if [ -n "$password" ]; then
+        sshpass -p "$password" ssh-copy-id -i ~/.ssh/id_rsa.pub -p "$port" "$username@$remote_server"
+        # Immediately unset the password after use
+        unset password
+    else
+        echo "Error: Password is not set in the configuration file."
+        exit 1
+    fi
+}
+
+###--- Main script ---###
+config_file="config.json"
+
+# Read configuration from JSON file
+read_config "$config_file"
+
+# Create SSH key if it doesn't exist
+if [ ! -f ~/.ssh/id_rsa ]; then
+    create_ssh_key
+fi
+
+# Add public key to remote server
+if [ -n "$hostname" ]; then
+    add_public_key_to_server "$hostname"
+else
+    echo "Error: Hostname is not specified in the configuration file."
+    exit 1
+fi
