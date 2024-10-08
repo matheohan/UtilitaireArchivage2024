@@ -115,6 +115,36 @@ def create_tgz_archive(source_file, archive_name):
         tar.add(source_file, arcname=os.path.basename(source_file))
     logging.info(f"Archive créée : {archive_name}")
 
+def connect_to_sftp(server_config):
+    """
+    Établit une connexion SFTP avec un serveur distant.
+    
+    :param server_config: Dictionnaire contenant la configuration du serveur SFTP
+    :return: Tuple contenant (paramiko.SFTPClient, paramiko.Transport)
+    """
+    transport = paramiko.Transport((server_config['hostname'], server_config['port']))
+
+    # Tentative de connexion avec la clé SSH
+    try:
+        private_key_path = server_config.get('private_key_path', os.path.expanduser('~/.ssh/id_rsa'))
+        private_key = paramiko.RSAKey.from_private_key_file(private_key_path)
+        transport.connect(username=server_config['username'], pkey=private_key)
+    except Exception as ssh_error:
+        logging.warning(f"Échec de l'authentification par clé SSH : {ssh_error}")
+        
+        # Si la clé SSH échoue, essayer avec le mot de passe
+        if 'password' in server_config:
+            try:
+                transport.connect(username=server_config['username'], password=server_config['password'])
+            except Exception as pwd_error:
+                logging.error(f"Échec de l'authentification par mot de passe : {pwd_error}")
+                raise Exception("Échec de l'authentification par clé SSH et par mot de passe")
+        else:
+            raise Exception("Échec de l'authentification par clé SSH et aucun mot de passe fourni")
+
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    return sftp, transport
+
 def upload_to_sftp(archive_name, server_config):
     """
     Transfère un fichier vers un serveur SFTP.
@@ -124,27 +154,7 @@ def upload_to_sftp(archive_name, server_config):
     :raises Exception: Si une erreur survient lors du transfert
     """
     try:
-        transport = paramiko.Transport((server_config['hostname'], server_config['port']))
-        
-        # Tentative de connexion avec la clé SSH
-        try:
-            private_key_path = server_config.get('private_key_path', os.path.expanduser('~/.ssh/id_rsa'))
-            private_key = paramiko.RSAKey.from_private_key_file(private_key_path)
-            transport.connect(username=server_config['username'], pkey=private_key)
-        except Exception as ssh_error:
-            logging.warning(f"Échec de l'authentification par clé SSH : {ssh_error}")
-            
-            # Si la clé SSH échoue, essayer avec le mot de passe
-            if 'password' in server_config:
-                try:
-                    transport.connect(username=server_config['username'], password=server_config['password'])
-                except Exception as pwd_error:
-                    logging.error(f"Échec de l'authentification par mot de passe : {pwd_error}")
-                    raise Exception("Échec de l'authentification par clé SSH et par mot de passe")
-            else:
-                raise Exception("Échec de l'authentification par clé SSH et aucun mot de passe fourni")
-
-        sftp = paramiko.SFTPClient.from_transport(transport)
+        sftp, transport = connect_to_sftp(server_config)
 
         destination = f"{server_config['destination_path']}/{archive_name}"
         # Création du dossier de destination s'il n'existe pas
@@ -171,9 +181,7 @@ def clean_old_archives(retention_days, server_config):
     :raises Exception: Si une erreur survient lors de la suppression des archives
     """
     try:
-        transport = paramiko.Transport((server_config['hostname'], server_config['port']))
-        transport.connect(username=server_config['username'], password=server_config['password'])
-        sftp = paramiko.SFTPClient.from_transport(transport)
+        sftp, transport = connect_to_sftp(server_config)
         
         retention_seconds = retention_days * 24 * 60 * 60
         now = time.time()
