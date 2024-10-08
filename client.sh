@@ -1,58 +1,58 @@
 ﻿#!/bin/bash
 
-###--- Dependencies and Cron Setup ---###
+###--- Dépendances et Configuration de Cron ---###
 
-# Install paramiko
+# Installation de paramiko
 apt install python3-paramiko -y
 
-# Install jq and sshpass
+# Installation de jq et sshpass
 apt install jq sshpass -y 
 
-# Get the directory where this script is located
+# Obtention du répertoire où ce script est situé
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
-# Define the Python script path relative to the script directory
+# Définition du chemin du script Python relatif au répertoire du script
 PYTHON_SCRIPT="$SCRIPT_DIR/main.py"
 
-# Define the cron schedule
+# Définition de l'interval cron
 CRON_SCHEDULE="* * * * *"
 
-# Create the cron job command
+# Création de la commande cron
 CRON_COMMAND="cd $SCRIPT_DIR && /usr/bin/python3 $PYTHON_SCRIPT >> $SCRIPT_DIR/cron_log.txt 2>&1"
 
-# Combine schedule and command
+# Création de la tâche cron
 CRON_JOB="$CRON_SCHEDULE $CRON_COMMAND"
 
-# Function to add or update the cron job
+# Fonction pour ajouter ou mettre à jour la tâche cron
 update_cron() {
-    # Check if the cron job already exists
+    # Vérification de l'existence de la tâche cron
     existing_job=$(crontab -l | grep -F "$PYTHON_SCRIPT")
     
     if [ -n "$existing_job" ]; then
-        # Update existing job
+        # Mise à jour de la tâche existante
         (crontab -l | sed "s|$existing_job|$CRON_JOB|") | crontab -
-        echo "Cron job updated."
+        echo "Tâche cron mise à jour."
     else
-        # Add new job
+        # Ajouter d'une nouvelle tâche
         (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
-        echo "Cron job added."
+        echo "Tâche cron ajoutée."
     fi
 }
 
-# Run the function to update crontab
+# Exécution de la fonction pour mettre à jour crontab
 update_cron
 
-# Print the working directory for verification
-echo "Working directory set to: $SCRIPT_DIR"
+# Affichage du répertoire de travail
+echo "Répertoire de travail défini sur : $SCRIPT_DIR"
 
-# Restart the cron service
+# Redémarrer le service cron
 systemctl restart cron
 
-# Enable the cron service to start on boot
+# Activation du service cron pour qu'il démarre au démarrage
 systemctl enable cron
 
-###--- SSH KEY Setup ---###
-# Function to read JSON file and extract configuration
+###--- Configuration de la clé SSH ---###
+# Fonction pour lire le fichier JSON et extraire la configuration associée
 read_config() {
     local json_file="$1"
     remote_host=$(jq -r '.remote_host_server_url' "$json_file")
@@ -69,39 +69,39 @@ update_config_file() {
     jq '.server.password = ""' "$json_file" > "$temp_file" && mv "$temp_file" "$json_file"
 }
 
-# Function to create SSH key
+# Fonction pour créer une clé SSH
 create_ssh_key() {
     ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 }
 
-# Function to add public key to remote server
+# Fonction pour ajouter la clé publique au serveur distant
 add_public_key_to_server() {
     local remote_server="$1"
     if [ -n "$password" ]; then
         sshpass -p "$password" ssh-copy-id -o StrictHostKeyChecking=no -p "$port" "$username@$remote_server"
-        # Immediately unset the password after use
+        # Effacement immédiat du mot de passe après utilisation
         update_config_file "$config_file"
     else
-        echo "Error: Password is not set in the configuration file."
+        echo "Erreur : Le mot de passe n'est pas défini dans le fichier de configuration."
         exit 1
     fi
 }
 
-###--- Main script ---###
+###--- Script principal ---###
 config_file="config.json"
 
-# Read configuration from JSON file
+# Lecture de la configuration depuis le fichier JSON
 read_config "$config_file"
 
-# Create SSH key if it doesn't exist
+# Création d'une clé SSH si elle n'existe pas
 if [ ! -f ~/.ssh/id_rsa ]; then
     create_ssh_key
 fi
 
-# Add public key to remote server
+# Ajout de la clé publique au serveur distant
 if [ -n "$hostname" ]; then
     add_public_key_to_server "$hostname"
 else
-    echo "Error: Hostname is not specified in the configuration file."
+    echo "Erreur : Le nom d'hôte n'est pas spécifié dans le fichier de configuration."
     exit 1
 fi

@@ -18,7 +18,8 @@
         "port": 22,
         "username": "",
         "password" : "",
-        "destination_path": "/home/files/"
+        "destination_path": "/home/files/",
+        "private_key_path": ""
     },
     
     

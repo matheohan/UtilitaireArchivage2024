@@ -125,7 +125,25 @@ def upload_to_sftp(archive_name, server_config):
     """
     try:
         transport = paramiko.Transport((server_config['hostname'], server_config['port']))
-        transport.connect(username=server_config['username'], password=server_config['password'])
+        
+        # Tentative de connexion avec la clé SSH
+        try:
+            private_key_path = server_config.get('private_key_path', os.path.expanduser('~/.ssh/id_rsa'))
+            private_key = paramiko.RSAKey.from_private_key_file(private_key_path)
+            transport.connect(username=server_config['username'], pkey=private_key)
+        except Exception as ssh_error:
+            logging.warning(f"Échec de l'authentification par clé SSH : {ssh_error}")
+            
+            # Si la clé SSH échoue, essayer avec le mot de passe
+            if 'password' in server_config:
+                try:
+                    transport.connect(username=server_config['username'], password=server_config['password'])
+                except Exception as pwd_error:
+                    logging.error(f"Échec de l'authentification par mot de passe : {pwd_error}")
+                    raise Exception("Échec de l'authentification par clé SSH et par mot de passe")
+            else:
+                raise Exception("Échec de l'authentification par clé SSH et aucun mot de passe fourni")
+
         sftp = paramiko.SFTPClient.from_transport(transport)
 
         destination = f"{server_config['destination_path']}/{archive_name}"
